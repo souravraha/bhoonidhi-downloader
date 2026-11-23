@@ -1,0 +1,17 @@
+[workspace]
+name = "bhoonidhi-downloader"
+version = "0.1.0"
+authors = ["Sourav Raha <19655241+souravraha@users.noreply.github.com>"]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+# stdlib-only script; python is the only runtime requirement (3.10+)
+python = ">=3.11"
+ruff = ">=0.5.0"
+
+[tasks]
+lint = "ruff check scripts/ && ruff format scripts/"
+# Bhoonidhi (NRSC) LISS-4 downloader - needs a Bhoonidhi account ($BHOONIDHI_USER / $BHOONIDHI_PASS)
+preview = "python scripts/download_bhoonidhi.py --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview"
+download = "python scripts/download_bhoonidhi.py --site delhi-urban --start 2025-01-01 --end 2025-02-28 --download --max-downloads 4"

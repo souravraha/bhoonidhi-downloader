@@ -45,7 +45,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 API_BASE = "https://bhoonidhi-api.nrsc.gov.in"
@@ -168,7 +168,7 @@ def _save_token_cache(user: str, tok: dict) -> None:
                 "access_token": tok["access_token"],
                 "refresh_token": tok.get("refresh_token", ""),
                 "expires_at": expires_at,
-                "saved": datetime.now(timezone.utc).isoformat(),
+                "saved": datetime.now(UTC).isoformat(),
             }
         )
     )
@@ -546,7 +546,7 @@ def main(argv: list[str] | None = None) -> None:
             log(f"  finished: {iid} -> {results[iid]}")
 
     manifest = {
-        "downloaded": datetime.now(timezone.utc).isoformat(),
+        "downloaded": datetime.now(UTC).isoformat(),
         "results": results,
         "items": [{"id": i["id"], "collection": i["collection"]} for i in pick],
     }

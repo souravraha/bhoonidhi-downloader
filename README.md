@@ -20,7 +20,8 @@ A registered Bhoonidhi account is required:
 - Resumable: already-downloaded zips are skipped; writes `search_results.json`
   and `manifest.json` next to the product files
 
-Stdlib only — Python 3.10+, no dependencies to install.
+Stdlib only — Python 3.10+, no runtime dependencies. A small [pixi](https://pixi.sh)
+project is included so you can just `pixi run preview` / `pixi run download`.
 
 ## Credentials
 
@@ -48,15 +49,17 @@ gitignored, so the template is the only tracked file).
 
 ## Usage
 
-Run from the repo root:
+`pixi run preview` / `pixi run download` are pre-wired for the Delhi-NCR
+site, Jan–Feb 2025. To run anything else, call the script directly (any
+`python` ≥ 3.10 works):
 
 ```bash
 # search + list LISS-4 over the Delhi-NCR benchmark site (no download)
-python scripts/download_bhoonidhi.py \
+pixi run python scripts/download_bhoonidhi.py \
     --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview
 
 # same search, then download up to 4 products into data/bhoonidhi/
-python scripts/download_bhoonidhi.py \
+pixi run python scripts/download_bhoonidhi.py \
     --site thar-desert --start 2025-01-01 --end 2025-02-28 \
     --download --max-downloads 4
 ```
