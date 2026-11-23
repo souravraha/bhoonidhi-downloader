@@ -1,0 +1,32 @@
+# --- Python ---
+__pycache__/
+*.pyc
+.venv
+venv
+
+# --- API credentials (token cache + direnv secrets) ---
+.auth/
+.envrc.local
+
+# --- Linter / test caches ---
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# --- Data artifacts ---
+*.tif
+*.tiff
+*.shp
+*.dbf
+*.shx
+*.prj
+*.geojson
+*.zip
+
+# --- Downloaded products ---
+data/
+
+# --- OS / IDE ---
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,4 @@
+# Bhoonidhi credentials (https://bhoonidhi.nrsc.gov.in/bhoonidhi/login.html)
+# Copy this file to .envrc.local and fill in your values. Do not commit.
+BHOONIDHI_USER="your-bhoonidhi-userid"
+BHOONIDHI_PASS="your-password"
