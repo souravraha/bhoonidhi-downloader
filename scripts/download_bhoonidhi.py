@@ -19,7 +19,7 @@ Respects the published rate limits: search 3 r/s, download 2/min with at most
 ``N`` products must be ordered via Browse & Order anyway).  Writes
 ``search_results.json`` and ``manifest.json`` next to the product files.
 
-Works with plain Python 3.10+ (stdlib only). Examples (from the repo root):
+Works with plain Python 3.11+ (stdlib only). Examples (from the repo root):
     # search LISS-4 over the Delhi-NCR urban benchmark site
     python scripts/download_bhoonidhi.py \\
         --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview

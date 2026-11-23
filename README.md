@@ -20,7 +20,7 @@ A registered Bhoonidhi account is required:
 - Resumable: already-downloaded zips are skipped; writes `search_results.json`
   and `manifest.json` next to the product files
 
-Stdlib only — Python 3.10+, no runtime dependencies. A small [pixi](https://pixi.sh)
+Stdlib only — Python 3.11+, no runtime dependencies. A small [pixi](https://pixi.sh)
 project is included so you can just `pixi run preview` / `pixi run download`.
 
 ## Credentials
@@ -44,14 +44,15 @@ cp .envrc.local.example .envrc.local
 direnv allow   # if direnv is installed
 ```
 
-`.envrc` sources `.envrc.local` automatically when present (both are
-gitignored, so the template is the only tracked file).
+`.envrc` sources `.envrc.local` automatically when present. Both `.envrc`
+and the `.envrc.local.example` template are tracked (no secrets); only
+`.envrc.local` is gitignored.
 
 ## Usage
 
 `pixi run preview` / `pixi run download` are pre-wired for the Delhi-NCR
 site, Jan–Feb 2025. To run anything else, call the script directly (any
-`python` ≥ 3.10 works):
+`python` ≥ 3.11 works):
 
 ```bash
 # search + list LISS-4 over the Delhi-NCR benchmark site (no download)
