@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bhoonidhi-cli"
+version = "0.1.0"
+description = "Search & download LISS-4 satellite products from the Bhoonidhi (NRSC) API — stdlib-only, no runtime dependencies."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Sourav Raha", email = "19655241+souravraha@users.noreply.github.com" }]
+keywords = [
+    "bhoonidhi",
+    "nrsc",
+    "isro",
+    "liss-4",
+    "resourcesat",
+    "satellite",
+    "remote-sensing",
+    "stac",
+    "earth-observation",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Utilities",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/souravraha/bhoonidhi-downloader"
+Repository = "https://github.com/souravraha/bhoonidhi-downloader"
+Issues = "https://github.com/souravraha/bhoonidhi-downloader/issues"
+
+[project.scripts]
+bhoonidhi = "bhoonidhi_cli.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["bhoonidhi_cli"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]
+# Line length is enforced by `ruff format`, not the linter (long help strings/
+# URLs are intentional and must not be split by the formatter).
+ignore = ["E501", "RUF022"]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,17 +1,26 @@
 [workspace]
-name = "bhoonidhi-downloader"
+name = "bhoonidhi-cli"
 version = "0.1.0"
 authors = ["Sourav Raha <19655241+souravraha@users.noreply.github.com>"]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [dependencies]
-# stdlib-only script; python is the only runtime requirement (3.11+)
+# stdlib-only runtime; python is the only hard runtime requirement (3.11+)
 python = ">=3.11"
+# dev tooling
+pip = ">=24"
+pytest = ">=8"
 ruff = ">=0.5.0"
+# used by `pip install --no-build-isolation .` to validate the package + CLI
+hatchling = ">=1.25"
 
 [tasks]
-lint = "ruff check scripts/ && ruff format scripts/"
-# Bhoonidhi (NRSC) LISS-4 downloader - needs a Bhoonidhi account ($BHOONIDHI_USER / $BHOONIDHI_PASS)
-preview = "python scripts/download_bhoonidhi.py --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview"
-download = "python scripts/download_bhoonidhi.py --site delhi-urban --start 2025-01-01 --end 2025-02-28 --download --max-downloads 4"
+install = "pip install --no-deps --no-build-isolation ."
+lint = "ruff check bhoonidhi_cli tests/ && ruff format --check bhoonidhi_cli tests/"
+format = "ruff format bhoonidhi_cli tests/"
+test = "pytest"
+check = "lint && test"
+# Bhoonidhi (NRSC) LISS-4 downloader — needs a Bhoonidhi account ($BHOONIDHI_USER / $BHOONIDHI_PASS)
+preview = "python -m bhoonidhi_cli --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview"
+download = "python -m bhoonidhi_cli --site delhi-urban --start 2025-01-01 --end 2025-02-28 --download --max-downloads 4"
