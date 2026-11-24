@@ -26,13 +26,24 @@ A **standalone, stdlib-only** Python package: **no runtime dependencies**
 
 ## Install
 
-```bash
-# preferred — puts the `bhoonidhi` command on your PATH in its own venv
-pipx install bhoonidhi-cli
+Everything is published on GitHub (no PyPI):
 
-# …or a regular environment
+```bash
+# 1) GitHub Release artifact — simplest, no registry setup needed
+pipx install https://github.com/souravraha/bhoonidhi-downloader/releases/latest/download/bhoonidhi_cli-0.1.0-py3-none-any.whl
+
+# …or plain pip:
+pip install "bhoonidhi-cli @ https://github.com/souravraha/bhoonidhi-downloader/releases/latest/download/bhoonidhi_cli-0.1.0-py3-none-any.whl"
+
+# 2) GitHub Packages (PyPI registry) — needs a PAT with `read:packages`
+export PIP_INDEX_URL="https://<user>:<PAT>@github.com/souravraha/bhoonidhi-downloader/pypi/simple"
 pip install bhoonidhi-cli
+unset PIP_INDEX_URL
 ```
+
+> **Releases:** tag a version and CI does the rest —
+> `git tag v0.1.0 && git push origin v0.1.0` builds the wheel, creates the
+> GitHub Release, and pushes to the repo's Packages registry.
 
 From a source checkout (development):
 

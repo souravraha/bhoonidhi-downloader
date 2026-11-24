@@ -2,26 +2,40 @@ name: publish
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["v*.*.*"]
 
 concurrency:
   group: publish
   cancel-in-progress: false
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
-          python-version: "3.12"
+          manifest-file: pixi.toml
+          locked: true
+      - name: Lint + test
+        run: pixi run check
+
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.11.3
+        with:
+          manifest-file: pixi.toml
+          locked: true
       - name: Build artifacts
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build
-      - name: Upload dist
-        uses: actions/upload-artifact@v4
+        run: pixi run python -m build --no-isolation
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
@@ -30,16 +44,23 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          manifest-file: pixi.toml
+          locked: true
+      - name: Publish to GitHub Packages (PyPI registry)
+        env:
+          TWINE_USERNAME: ${{ github.actor }}
+          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: pixi run twine upload --non-interactive --repository-url https://pypi.pkg.github.com/${{ github.repository }} dist/*
+      - name: Create GitHub Release with artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+          generate_release_notes: true

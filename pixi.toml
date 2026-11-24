@@ -20,7 +20,12 @@ install = "pip install --no-deps --no-build-isolation ."
 lint = "ruff check bhoonidhi_cli tests/ && ruff format --check bhoonidhi_cli tests/"
 format = "ruff format bhoonidhi_cli tests/"
 test = "pytest"
-check = "lint && test"
+check = { cmd = "echo 'All checks passed'", depends-on = ["lint", "test"] }
 # Bhoonidhi (NRSC) LISS-4 downloader — needs a Bhoonidhi account ($BHOONIDHI_USER / $BHOONIDHI_PASS)
 preview = "python -m bhoonidhi_cli --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview"
 download = "python -m bhoonidhi_cli --site delhi-urban --start 2025-01-01 --end 2025-02-28 --download --max-downloads 4"
+
+[pypi-dependencies]
+# release tooling: `python -m build` + `twine upload`
+build = ">=1.2"
+twine = ">=5"
