@@ -69,3 +69,5 @@ force-sort-within-sections = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# import bhoonidhi_cli from the source tree, so tests run without pip-installing the package (CI)
+pythonpath = ["."]
