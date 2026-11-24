@@ -1,8 +1,10 @@
 # Bhoonidhi (NRSC) Satellite Data Downloader
 
-Search & download LISS-4 (ResourceSat-2 / 2A L2) products from the official
-[Bhoonidhi API](https://bhoonidhi-api.nrsc.gov.in) — STAC catalogue search plus
-authenticated product download.
+Search & download satellite products — **all registered STAC collections by
+default** (ISRO CartoSat/ResourceSat/EOS-04/06, NISAR, Novasar, Sentinel —
+incl. LISS-4, LISS-3, OCM, AWIFS, SAR — 63 collections at last check) — from
+the official [Bhoonidhi API](https://bhoonidhi-api.nrsc.gov.in): STAC
+catalogue search plus authenticated product download.
 
 A registered Bhoonidhi account is required:
 <https://bhoonidhi.nrsc.gov.in/bhoonidhi/login.html>
@@ -13,12 +15,16 @@ A registered Bhoonidhi account is required:
   re-authentication on HTTP 401, JWT cached in `.auth/bhoonidhi_token.json`
   (mode 600, gitignored)
 - STAC search with paging, CQL2-JSON filters, and GeoJSON / point / bbox AOIs
+- Searches across **every collection registered on the API** (fetched live
+  from `GET /data/collections`); narrow with `--platform` (e.g. `EOS-06`) or
+  explicit `--collections`
+- Downloads every eligible item by default; `--max-downloads` caps if you want
 - Rate-limit aware: search 3 r/s, download starts 2/min, ≤ 5 concurrent
   streams (2 workers), HTTP 429/412 → back-off, 504 → retry
 - Only `Online = Y` items are downloaded (per the API spec, `N` products must
   be ordered via Browse & Order anyway)
-- Resumable: already-downloaded zips are skipped; writes `search_results.json`
-  and `manifest.json` next to the product files
+- Resumable: already-downloaded zips are skipped; writes
+  `search_results.json` and `manifest.json` next to the product files
 
 Stdlib only — Python 3.10+, no dependencies to install.
 
@@ -51,11 +57,20 @@ gitignored, so the template is the only tracked file).
 Run from the repo root:
 
 ```bash
-# search + list LISS-4 over the Delhi-NCR benchmark site (no download)
+# search + list every registered collection over the Delhi-NCR benchmark site
 python scripts/download_bhoonidhi.py \
     --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview
 
-# same search, then download up to 4 products into data/bhoonidhi/
+# same search, then download every eligible product into data/bhoonidhi/
+python scripts/download_bhoonidhi.py \
+    --site thar-desert --start 2025-01-01 --end 2025-02-28 --download
+
+# only one platform, e.g. the EOS-06 ocean-colour collections
+python scripts/download_bhoonidhi.py \
+    --platform EOS-06 --site delhi-urban --start 2025-01-01 \
+    --end 2025-02-28 --preview
+
+# cap the number of products fetched (default: no cap)
 python scripts/download_bhoonidhi.py \
     --site thar-desert --start 2025-01-01 --end 2025-02-28 \
     --download --max-downloads 4
@@ -70,13 +85,21 @@ python scripts/download_bhoonidhi.py \
 | `--aoi-file`| GeoJSON file whose geometry bounds the search        |
 | `--bbox`    | `west,south,east,north`                              |
 
+### Collection scope
+
+| flag | meaning |
+|------|---------|
+| *(default)* | every collection registered on the API (listed live, 63 at last check) |
+| `--platform` | every collection whose id starts with the prefix, e.g. `EOS-06`, `ResourceSat-2A`, `NISAR`, `Sentinel-1A` |
+| `--collections A B …` | an explicit list of STAC collection ids (overrides both) |
+
 ### Other useful flags
 
 - `--online-only` / `--no-online-filter` — restrict to `Online = Y` (default: on)
 - `--extra-filter` — raw CQL2-JSON, e.g.
   `'{"args":[{"property":"Cloud_Cover"},"80"],"op":"lt"}'`
-- `--limit` — max items to return (API cap 500)
-- `--max-downloads` — cap on products fetched
+- `--limit` — max items returned by the search (default 500, the API page cap)
+- `--max-downloads` — cap on products fetched (default 0 = no cap)
 - `--out` — output directory (default `data/bhoonidhi/`)
 - `--reauth` — discard the cached token and force a fresh password login
 

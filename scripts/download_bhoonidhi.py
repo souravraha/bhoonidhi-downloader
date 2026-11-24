@@ -1,4 +1,4 @@
-"""Bhoonidhi (NRSC) data downloader — PS-10 LISS-4 bitemporal pairs.
+"""Bhoonidhi (NRSC) data downloader — search & fetch eligible satellite products.
 
 Talks to the official Bhoonidhi API (STAC catalogue + authenticated download):
     auth    POST https://bhoonidhi-api.nrsc.gov.in/auth/token
@@ -20,15 +20,14 @@ Respects the published rate limits: search 3 r/s, download 2/min with at most
 ``search_results.json`` and ``manifest.json`` next to the product files.
 
 Works with plain Python 3.10+ (stdlib only). Examples (from the repo root):
-    # search LISS-4 over the Delhi-NCR urban benchmark site
+    # search every platform over the Delhi-NCR urban benchmark site
     python scripts/download_bhoonidhi.py \\
         --site delhi-urban --start 2025-01-01 --end 2025-02-28 --preview
 
-    # same search, then download up to 4 products
+    # search a single platform, then download every eligible product
     python scripts/download_bhoonidhi.py \\
-        --site delhi-urban --start 2025-01-01 --end 2025-02-28 \\
-        --download --max-downloads 4 \\
-        --out data/bhoonidhi
+        --platform ResourceSat-2A --site delhi-urban --start 2025-01-01 \\
+        --end 2025-02-28 --download --out data/bhoonidhi
 """
 
 from __future__ import annotations
@@ -55,10 +54,13 @@ DOWNLOAD_URL = f"{API_BASE}/download"
 AUTH_DIR = Path(__file__).resolve().parents[1] / ".auth"
 TOKEN_FILE = AUTH_DIR / "bhoonidhi_token.json"
 
+# PS-10 LISS-4 collections, still handy to pass via ``--collections``
+# (the default is now every collection registered on the API).
 LISS4_COLLECTIONS = [
     "ResourceSat-2_LISS4-MX70_L2",
     "ResourceSat-2A_LISS4-MX70_L2",
 ]
+COLLECTIONS_URL = f"{API_BASE}/data/collections"
 
 # The 6 terrains named in the PS-10 problem statement (BENCHMARK_DATA.md §1).
 BENCHMARK_SITES: dict[str, tuple[float, float]] = {
@@ -256,6 +258,43 @@ def polygon_around(lon: float, lat: float, radius_km: float) -> dict:
     return {"type": "Polygon", "coordinates": [verts]}
 
 
+def list_collections(sess: Session) -> list[str]:
+    """Fetch every STAC collection id currently registered on the API."""
+    status, _, raw = _request(COLLECTIONS_URL, token=sess.token)
+    if status == 401:
+        sess.handle_401()
+        status, _, raw = _request(COLLECTIONS_URL, token=sess.token)
+    if status != 200:
+        raise SystemExit(f"collection listing failed (HTTP {status}): {raw[:400]!r}")
+    doc = json.loads(raw)
+    return [c["id"] for c in doc.get("collections", [])]
+
+
+def resolve_collections(args, sess: Session) -> list[str]:
+    """Map ``--platform`` / explicit ``--collections`` to concrete collection ids.
+
+    Explicit ``--collections`` wins if given. Otherwise ``--platform <p>``
+    selects every collection whose id starts with ``p`` (case-insensitive).
+    Otherwise every registered collection is searched.
+    """
+    if args.collections:
+        return list(args.collections)
+    all_ids = list_collections(sess)
+    if args.platform:
+        prefix = args.platform.strip().upper()
+        picked = [c for c in all_ids if c.upper().startswith(prefix)]
+        if not picked:
+            known = sorted({c.split("_")[0] for c in all_ids})
+            raise SystemExit(
+                f"no collection starts with {args.platform!r}; "
+                f"known prefixes: {', '.join(known)}"
+            )
+        log(f"--platform {args.platform}: {len(picked)} collection(s): {', '.join(picked)}")
+        return picked
+    log(f"searching all {len(all_ids)} collection(s) registered on the API")
+    return all_ids
+
+
 def build_query(args: argparse.Namespace) -> dict:
     query: dict = {
         "collections": args.collections,
@@ -444,7 +483,8 @@ def summarize(items: list[dict]) -> None:
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     default_out = Path(__file__).resolve().parents[1] / "data" / "bhoonidhi"
     ap = argparse.ArgumentParser(
-        description="Search & download Bhoonidhi (NRSC) satellite products for PS-10.",
+        description="Search & download Bhoonidhi (NRSC) satellite products "
+        "(all ISRO + NISAR + Sentinel platforms by default).",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     ap.add_argument(
@@ -471,11 +511,17 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     ap.add_argument(
         "--collections",
         nargs="+",
-        default=LISS4_COLLECTIONS,
-        help="STAC collection id(s)",
+        default=None,
+        help="explicit STAC collection id(s); default = every collection "
+        "registered on the API",
     )
     ap.add_argument(
-        "--limit", type=int, default=10, help="max items to return (API cap 500)"
+        "--platform",
+        help="search every collection starting with this platform prefix, "
+        "e.g. EOS-06, ResourceSat-2A, NISAR, Sentinel-1A",
+    )
+    ap.add_argument(
+        "--limit", type=int, default=500, help="max items returned by search (API cap 500)"
     )
     ap.add_argument(
         "--online-only",
@@ -496,7 +542,7 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--download", action="store_true", help="search, then download matched products"
     )
     ap.add_argument(
-        "--max-downloads", type=int, default=4, help="cap on products fetched"
+        "--max-downloads", type=int, default=0, help="cap on products fetched (0 = all eligible)"
     )
     ap.add_argument("--out", type=Path, default=default_out, help="output directory")
     ap.add_argument(
@@ -521,6 +567,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.reauth:
         invalidate_cache(args.user)
     sess = Session(args.user, args.passwd)
+    args.collections = resolve_collections(args, sess)
     items = with_details(sess, search(sess, args))
     summarize(items)
 
